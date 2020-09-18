@@ -8,7 +8,7 @@ Run under `Python3` with packages: `tabulate`, `tqdm`
 ```
 python main.py --train TRAIN_FILE --test TEST_FILE --n N [--smooth]
 ```
-###Arguments
+### Arguments
 * train: location of training file
 * test: location of test file
 * n: n for n-gram, e.g. 1 for unigram, 2 for bi-gram, so on and so forth
