@@ -1,11 +1,4 @@
 import argparse
-import os
-from collections import defaultdict
-import math
-import tabulate
-from multiprocessing import Pool
-from tqdm import tqdm
-import numpy as np
 
 from dataset import TextDataset
 from classifier import TextClassifier
@@ -21,9 +14,6 @@ def parse_args():
 
     return args
 args = parse_args()
-
-
-
 
 
 if __name__ == '__main__':

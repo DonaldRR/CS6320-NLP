@@ -11,13 +11,26 @@ class TextDataset(object):
         self.method = method
         self.n_features = n_features
         self.data = self._load_ds()
+        self.data_priors = self._compute_priors()
         self.data_table = None
         self.vocabulary = None
+        self.N_words_doc = None
 
         if split.lower() == 'train':
-            self.data_table, self.vocabulary =  self._collect_words(self.data)
+            self.data_table, self.vocabulary, self.N_words_doc =  self._collect_words(self.data)
             self.N = len(self.vocabulary)
             self._feature_selection()
+
+    def _compute_priors(self):
+
+        priors = defaultdict(lambda : 0)
+        N = 0
+        for label, docs in self.data.items():
+            N += len(docs)
+        for label, docs in self.data.items():
+            priors[label] = len(docs) + 1 / (N + len(self.data))
+
+        return priors
 
     def _load_stopwords(self, path):
         if path:
@@ -29,6 +42,12 @@ class TextDataset(object):
         return []
 
     def _feature_selection(self):
+
+        """
+        Choose a subset of words to be evaluated during inference
+
+        :return:
+        """
 
         idx = 0
         cls2idx = {}
@@ -87,14 +106,27 @@ class TextDataset(object):
 
     def p_w_c(self, w, c):
 
+        """
+        Compute posterior probability P(w|c), where c is the class of the text and w the word
+
+        :param w:
+        :param c:
+        :return:
+        """
+
         if self.data_table:
-            n_c = sum(list(self.data_table[c].values())) + self.N
+            n_c = self.N_words_doc[c] + self.N
             n_w_c = self.data_table[c][w] + 1
             return n_w_c / n_c
         else:
             raise NotImplementedError('This is not training set')
 
     def _load_ds(self):
+
+        """
+        Load dataset from .txt files
+        :return:
+        """
 
         ham_path = os.path.join(self.ds_dir, 'ham')
         spam_path = os.path.join(self.ds_dir, 'spam')
@@ -113,6 +145,7 @@ class TextDataset(object):
                 lines = list(map(_line_filter, lines))
                 for line in lines:
                     ret += line
+                ret = ['<START>'] + ret + ['<END>']
 
                 return ret
 
@@ -142,10 +175,12 @@ class TextDataset(object):
 
         vocabulary = defaultdict(lambda : 0)
         ret = defaultdict(lambda: defaultdict(lambda: 0))
+        n_words_doc = defaultdict(lambda : 0)
         for text_label, text_content in data_dict.items():
             for text in text_content:
                 for word in text:
                     ret[text_label][word] += 1
                     vocabulary[word] += 1
+            n_words_doc[text_label] = sum(list(ret[text_label].values()))
 
-        return ret, vocabulary
+        return ret, vocabulary, n_words_doc

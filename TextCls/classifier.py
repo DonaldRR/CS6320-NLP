@@ -1,6 +1,6 @@
 import tabulate
 import math
-
+from tqdm import tqdm
 
 class TextClassifier(object):
 
@@ -12,8 +12,8 @@ class TextClassifier(object):
 
     def _predict(self, x):
 
-        p_ham = 0
-        p_spam = 0
+        p_ham = math.log10(self.train_ds.data_priors['ham'])
+        p_spam = math.log10(self.train_ds.data_priors['spam'])
         for word in x:
             p_ham += math.log10(self.train_ds.p_w_c(word, 'ham'))
             p_spam += math.log10(self.train_ds.p_w_c(word, 'spam'))
