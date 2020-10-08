@@ -4,13 +4,16 @@ from torch import nn
 
 
 def evaluate(model, input, dataset):
+
+    input = input.split(' ')
     model.eval()
     with torch.no_grad():
+        input_len = len(input)
         input, _ = dataset.preprocess(input)
-        input = input.cuda()
+        input = input.cuda().unsqueeze(0)
         pred = model(input).detach().cpu().numpy()[0]
 
-        return dataset.postprocess(pred)
+        return dataset.postprocess(pred, input_len)
 
 
 def compute_confusion_matrix(pred, label, n_class):

@@ -54,6 +54,9 @@ class POSTDataset(Dataset):
         if label:
             label = [self.label_names.index(tag) for i, tag in enumerate(label)]
         padded_input, padded_label = pad(input, label)
+        padded_input = torch.tensor(padded_input)
+        if padded_label:
+            padded_label = torch.tensor(padded_label)
 
         return padded_input, padded_label
 
@@ -64,14 +67,27 @@ class POSTDataset(Dataset):
 
         return tags
 
+    def sample(self, sample_size):
+
+        sample_inds = np.random.choice(list(range(len(self.X))), sample_size, replace=False)
+        sample_sentences = []
+        sample_input = torch.zeros(sample_size, self.max_len)
+        sample_label = torch.zeros(sample_size, self.max_len)
+        for i, ind in enumerate(sample_inds):
+            sample_sentences.append(self.X[ind])
+            tmp_sentence, tmp_tag = self.preprocess(self.X[ind], self.Y[ind])
+            sample_input[i] = tmp_sentence
+            sample_label[i] = tmp_tag
+        sample_input = sample_input.long()
+        sample_label = sample_label.long()
+
+        return sample_sentences, sample_input, sample_label
+
     def __getitem__(self, item):
 
         sentence = self.X[item]
         tags = self.Y[item]
         sentence, tags = self.preprocess(sentence, tags)
-
-        sentence = torch.tensor(sentence)
-        tags = torch.tensor(tags)
 
         return sentence, tags
 

@@ -32,11 +32,12 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', type=str, default='train')
-    parser.add_argument('--embd', type=str, default='pretrained/glove.6B.50d.txt')
+    parser.add_argument('--embd', type=str, default='pretrained/glove.6B.100d.txt')
     parser.add_argument('--epoch', type=int, default=100)
     parser.add_argument('--batch-size', type=int, default=256)
     parser.add_argument('--logdir', type=str, default='log')
     parser.add_argument('--ckpt', type=str, default='./log/epoch_100.pth')
+    parser.add_argument('--eval', action='store_true', default=False)
     args = parser.parse_args()
 
     return args
@@ -46,10 +47,11 @@ def train(args, model, dataset, dataloader, optim, criterion, tb_logger):
     
     global_step = 0
     with tqdm(total=args.epoch) as pbar:
+
         confusion_matrix = np.zeros((dataset.n_class, dataset.n_class))
-        model.train()
         for i_epoch in range(args.epoch):
 
+            model.train()
             loss_sum = torch.tensor(0).cuda().float()
             for input, gt in tqdm(dataloader):
                 input = input.cuda()
@@ -71,6 +73,24 @@ def train(args, model, dataset, dataloader, optim, criterion, tb_logger):
                     confusion_matrix += compute_confusion_matrix(pred[i_item], gt[i_item], train_dataset.n_class)
 
                 global_step += 1
+
+            sample_sentences, sample_inputs, sample_tags = dataset.sample(5)
+            model.eval()
+            sample_preds = model(sample_inputs.cuda())
+            sample_preds = sample_preds.detach().cpu().numpy()
+            sample_preds = np.argmax(sample_preds, axis=2)
+            sample_tags = sample_tags.numpy()
+            for j in range(len(sample_preds)):
+                tmp_len = (sample_tags[j] >= 0).sum()
+                print('## Sample %d' % j)
+                output_str = ""
+                for k in range(tmp_len):
+                    output_str += "%s/%s(%s) " % (
+                        sample_sentences[j][k],
+                        dataset.label_names[sample_tags[j][k]],
+                        dataset.label_names[sample_preds[j][k]])
+                print(output_str)
+
 
             torch.save({
                 'model_state_dict': model.state_dict(),
@@ -101,9 +121,6 @@ if __name__ == '__main__':
     print('* Loading pretrained embeddings')
     pretrained_embeddings = load_pretrained_embeddings(args.embd)
 
-    print('* Initialize tensorboard logger')
-    tb_logger = tensorboardX.SummaryWriter(args.logdir)
-
     print('* Loading dataset')
     train_dataset = POSTDataset(args.train, indexes=pretrained_embeddings['word2idx'], max_len=200)
     train_dataloader = DataLoader(dataset=train_dataset,
@@ -114,11 +131,15 @@ if __name__ == '__main__':
     model = POSTModel(pretrained_embeddings['embeddings'], train_dataset.n_class, hidden_dim=64)
     model.cuda()
     criterion = CELoss()
-    optim = torch.optim.SGD(model.parameters(),lr=0.01, momentum=0.9, nesterov=True, weight_decay=1e-5)
+    #optim = torch.optim.SGD(model.parameters(),lr=0.02, momentum=0.2, nesterov=True, weight_decay=1e-5)
+    optim = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
     #lr_scheduler = LR_Scheduler(0.02, len(train_dataloader) * args.epoch)
 
-    print('* Start training')
-    train(args, model, train_dataset, train_dataloader, optim, criterion, tb_logger)
+    if not args.eval:
+        print('* Initialize tensorboard logger')
+        tb_logger = tensorboardX.SummaryWriter(args.logdir)
+        print('* Start training')
+        train(args, model, train_dataset, train_dataloader, optim, criterion, tb_logger)
 
     print('* Testing ')
     if os.path.isfile(args.ckpt):
