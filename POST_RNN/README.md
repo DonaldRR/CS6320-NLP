@@ -17,8 +17,8 @@ python main.py --eval --ckpt $MODEL_CHECKPOINT_PATH --embd $WORD_EMBEDDINGS_FILE
 ```
 #### Expected
 Test cases are:
-* ``
-* ``
+* `people continue to enquire the reason for the race for outer space`
+* `the secretariat is expected to race tomorrow`
 Expected outputs are:
-* ``
-* ``
+* `['NOUN', 'VERB', 'X', 'VERB', 'DETERMINER', 'NOUN', 'PREPOSITION', 'DETERMINER', 'NOUN', 'PREPOSITION', 'ADJECTIVE', 'NOUN']`
+* `['DETERMINER', 'NOUN', 'VERB', 'VERB', 'X', 'NOUN', 'NOUN']`
