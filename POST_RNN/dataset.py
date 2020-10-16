@@ -11,6 +11,8 @@ class POSTDataset(Dataset):
         self.indexes = indexes
         self.max_len = max_len
         self.X, self.Y, self.label_names = self._load_data()
+        self.label_names = sorted(self.label_names)
+        print('labels: ', self.label_names)
         # self.label_names.insert(0, 'BLANK')
         self.missing_embedding_idx = 1
 
@@ -78,6 +80,12 @@ class POSTDataset(Dataset):
             tmp_sentence, tmp_tag = self.preprocess(self.X[ind], self.Y[ind])
             sample_input[i] = tmp_sentence
             sample_label[i] = tmp_tag
+
+        #sample_sentences.append(self.X[ind])
+        #tmp_sentence, tmp_tag = self.preprocess(self.X[ind], self.Y[ind])
+        #sample_input[i] = tmp_sentence
+        #sample_label[i] = tmp_tag
+
         sample_input = sample_input.long()
         sample_label = sample_label.long()
 

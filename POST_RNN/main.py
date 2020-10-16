@@ -33,10 +33,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--train', type=str, default='train')
     parser.add_argument('--embd', type=str, default='pretrained/glove.6B.100d.txt')
-    parser.add_argument('--epoch', type=int, default=100)
+    parser.add_argument('--epoch', type=int, default=20)
     parser.add_argument('--batch-size', type=int, default=256)
     parser.add_argument('--logdir', type=str, default='log')
-    parser.add_argument('--ckpt', type=str, default='./log/epoch_100.pth')
+    parser.add_argument('--ckpt', type=str, default='./log/epoch_99.pth')
     parser.add_argument('--eval', action='store_true', default=False)
     args = parser.parse_args()
 
@@ -142,18 +142,21 @@ if __name__ == '__main__':
         train(args, model, train_dataset, train_dataloader, optim, criterion, tb_logger)
 
     print('* Testing ')
-    if not os.path.isfile(args.ckpt):
-        print("! ERROR: Checkpoint %s is not available" % args.ckpt)
-    else:
-        print('## Loading checkpoint[%s] for testing' % args.ckpt)
-        ckpt_state_dict = torch.load(args.ckpt)['model_state_dict']
-        model.load_state_dict(ckpt_state_dict)
-        model.cuda()
+    if args.eval:
+        if os.path.isfile(args.ckpt):
+            print('## Loading checkpoint[%s] for testing' % args.ckpt)
+            ckpt_state_dict = torch.load(args.ckpt)['model_state_dict']
+            model.load_state_dict(ckpt_state_dict)
+            model.cuda()
+        else:
+            print("! ERROR: Checkpoint %s is not available" % args.ckpt)
+
     test_sentences = [
         'people continue to enquire the reason for the race for outer space',
         'the secretariat is expected to race tomorrow']
-        for i, sentence in enumerate(test_sentences):
-            print('## Test case %d' % i)
-            print('\tTest input:%s' % sentence)
-            output = evaluate(model, sentence, train_dataset)
-            print('\tTest output:', output)
+
+    for i, sentence in enumerate(test_sentences):
+        print('## Test case %d' % i)
+        print('\tTest input:%s' % sentence)
+        output = evaluate(model, sentence, train_dataset)
+        print('\tTest output:', output)
