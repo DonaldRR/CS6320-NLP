@@ -142,7 +142,9 @@ if __name__ == '__main__':
         train(args, model, train_dataset, train_dataloader, optim, criterion, tb_logger)
 
     print('* Testing ')
-    if os.path.isfile(args.ckpt):
+    if not os.path.isfile(args.ckpt):
+        print("! ERROR: Checkpoint %s is not available" % args.ckpt)
+    else:
         print('## Loading checkpoint[%s] for testing' % args.ckpt)
         ckpt_state_dict = torch.load(args.ckpt)['model_state_dict']
         model.load_state_dict(ckpt_state_dict)
@@ -150,8 +152,8 @@ if __name__ == '__main__':
     test_sentences = [
         'people continue to enquire the reason for the race for outer space',
         'the secretariat is expected to race tomorrow']
-    for i, sentence in enumerate(test_sentences):
-        print('## Test case %d' % i)
-        print('\tTest input:%s' % sentence)
-        output = evaluate(model, sentence, train_dataset)
-        print('\tTest output:', output)
+        for i, sentence in enumerate(test_sentences):
+            print('## Test case %d' % i)
+            print('\tTest input:%s' % sentence)
+            output = evaluate(model, sentence, train_dataset)
+            print('\tTest output:', output)
